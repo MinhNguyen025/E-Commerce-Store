@@ -1,5 +1,3 @@
-// File: src/components/admin/AdminDashboard.jsx
-
 import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 import {
@@ -134,31 +132,37 @@ const AdminDashboard = () => {
     series: [{ name: "Registrations", data: [] }],
   });
 
-  // Effect để cập nhật biểu đồ sales
-  useEffect(() => {
-    if (salesDetail) {
-      const formattedSalesDate = salesDetail.map((item) => ({
-        x: moment(item._id).format("MMM YYYY"), // Định dạng tháng năm
-        y: item.totalSales,
-      }));
+// Effect để cập nhật biểu đồ sales
+useEffect(() => {
+  if (salesDetail) {
+    // Create a copy of salesDetail and sort it by date ascending
+    const sortedSalesDetail = [...salesDetail].sort((a, b) => {
+      // Assuming _id is a date string. If it's a timestamp, adjust accordingly.
+      return new Date(a._id) - new Date(b._id);
+    });
 
-      setSalesChart((prevState) => ({
-        ...prevState,
-        options: {
-          ...prevState.options,
-          xaxis: {
-            categories: formattedSalesDate.map((item) => item.x),
-          },
+    const formattedSalesDate = sortedSalesDetail.map((item) => ({
+      x: moment(item._id).format("MMM YYYY"), // Định dạng tháng năm
+      y: item.totalSales,
+    }));
+
+    setSalesChart((prevState) => ({
+      ...prevState,
+      options: {
+        ...prevState.options,
+        xaxis: {
+          categories: formattedSalesDate.map((item) => item.x),
         },
-        series: [
-          {
-            name: "Sales",
-            data: formattedSalesDate.map((item) => item.y),
-          },
-        ],
-      }));
-    }
-  }, [salesDetail]);
+      },
+      series: [
+        {
+          name: "Sales",
+          data: formattedSalesDate.map((item) => item.y),
+        },
+      ],
+    }));
+  }
+}, [salesDetail]);
 
   // Effect để cập nhật biểu đồ registrations
   useEffect(() => {
@@ -196,7 +200,7 @@ const AdminDashboard = () => {
         {/* Các Card Tổng Quan */}
         <div className="w-full flex justify-around flex-wrap">
           {/* Card Sales */}
-          <div className="rounded-lg bg-gray-800 p-5 w-64 mt-5 shadow-lg">
+          <div className="rounded-lg bg-[#1A1A1A] p-5 w-64 mt-5 shadow-lg">
             <div className="font-bold rounded-full w-12 h-12 bg-red-500 text-center flex items-center justify-center text-white text-2xl">
               $
             </div>
@@ -213,7 +217,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Card Customers */}
-          <div className="rounded-lg bg-gray-800 p-5 w-64 mt-5 shadow-lg">
+          <div className="rounded-lg bg-[#1A1A1A] p-5 w-64 mt-5 shadow-lg">
             <div className="font-bold rounded-full w-12 h-12 bg-blue-500 text-center flex items-center justify-center text-white text-2xl">
               👥
             </div>
@@ -229,7 +233,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Card Orders */}
-          <div className="rounded-lg bg-gray-800 p-5 w-64 mt-5 shadow-lg">
+          <div className="rounded-lg bg-[#1A1A1A] p-5 w-64 mt-5 shadow-lg">
             <div className="font-bold rounded-full w-12 h-12 bg-green-500 text-center flex items-center justify-center text-white text-2xl">
               🛒
             </div>

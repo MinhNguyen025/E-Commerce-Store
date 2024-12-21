@@ -36,14 +36,18 @@ const Login = () => {
         try {
           // Fetch the cart data
           const cartResponse = await refetchCart();
-
+  
           if (cartResponse.data) {
             // Update the cart in Redux
             dispatch(setCartItemsFromDB(cartResponse.data));
           }
-
-          // Navigate to the redirect URL
-          navigate(redirect);
+  
+          // Navigate based on user role
+          if (userInfo.isAdmin) {
+            navigate("/admin/dashboard");
+          } else {
+            navigate(redirect);
+          }
         } catch (err) {
           console.error('Error fetching cart:', err);
           toast.error("Failed to load cart. Please try again.");
@@ -51,10 +55,10 @@ const Login = () => {
         }
       }
     };
-
+  
     fetchCartAndNavigate();
   }, [userInfo, refetchCart, dispatch, navigate, redirect]);
-
+  
   const submitHandler = async (e) => {
     e.preventDefault();
 
