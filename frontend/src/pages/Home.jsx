@@ -57,9 +57,6 @@ const Home = () => {
               </div>
             ))}
           </div>
-
-          {/* Ad Banner */}
-          <AdBanner />
         </>
       )}
 
