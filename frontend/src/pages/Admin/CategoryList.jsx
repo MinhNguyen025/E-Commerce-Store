@@ -12,12 +12,13 @@ import Modal from "../../components/Modal";
 import AdminMenu from "./AdminMenu";
 
 const CategoryList = () => {
-  const { data: categories } = useFetchCategoriesQuery();
+  const { data: categories, isLoading, isError } = useFetchCategoriesQuery();
   const [name, setName] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [updatingName, setUpdatingName] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState(""); // "add", "edit" or "delete"
 
   const [createCategory] = useCreateCategoryMutation();
   const [updateCategory] = useUpdateCategoryMutation();
@@ -43,6 +44,8 @@ const CategoryList = () => {
       } else {
         setName("");
         toast.success(`${result.name} is created.`);
+        setModalVisible(false);
+        setModalType("");
       }
     } catch (error) {
       console.error(error);
@@ -73,13 +76,20 @@ const CategoryList = () => {
         setSelectedCategory(null);
         setUpdatingName("");
         setModalVisible(false);
+        setModalType("");
       }
     } catch (error) {
       console.error(error);
+      toast.error("Updating category failed.");
     }
   };
 
   const handleDeleteCategory = async () => {
+    if (!selectedCategory || !selectedCategory._id) {
+      toast.error("Invalid category selected.");
+      return;
+    }
+
     try {
       const result = await deleteCategory(selectedCategory._id).unwrap();
 
@@ -89,6 +99,7 @@ const CategoryList = () => {
         toast.success(`${result.name} is deleted.`);
         setSelectedCategory(null);
         setModalVisible(false);
+        setModalType("");
       }
     } catch (error) {
       console.error(error);
@@ -100,26 +111,45 @@ const CategoryList = () => {
     e.preventDefault();
   };
 
+  const openAddModal = () => {
+    setModalType("add");
+    setModalVisible(true);
+  };
+
+  const openEditModal = (category) => {
+    setSelectedCategory(category);
+    setUpdatingName(category.name);
+    setModalType("edit");
+    setModalVisible(true);
+  };
+
+  const openDeleteModal = (category) => {
+    setSelectedCategory(category);
+    setModalType("delete");
+    setModalVisible(true);
+  };
+
   return (
-    <div className="ml-[10rem] flex flex-col md:flex-row">
-      <AdminMenu />
-      <div className="md:w-3/4 p-3">
-        <div className="h-12">Manage Categories</div>
-        <h1>Add a category</h1>
-        <CategoryForm
-          value={name}
-          setValue={setName}
-          handleSubmit={handleCreateCategory}
-        />
-        <br />
-        <hr />
+    <div className="flex bg-[#1A1A1A] min-h-screen text-white ml-32">
+      {/* <AdminMenu /> */}
+      <div className="flex-1 p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-semibold">Manage Categories</h2>
+          <button
+            className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+            onClick={openAddModal}
+          >
+            + Add a Category
+          </button>
+        </div>
+        <hr className="border-gray-700 mb-4" />
 
         {/* Search Input */}
         <div className="my-4">
           <input
             type="text"
             placeholder="Search categories..."
-            className="border p-2 rounded w-full"
+            className="bg-[#1A1A1A] text-white border border-gray-700 p-2 rounded w-full"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyPress={(e) => {
@@ -128,37 +158,96 @@ const CategoryList = () => {
           />
         </div>
 
-        <div className="flex flex-wrap">
-          {filteredCategories?.length > 0 ? (
-            filteredCategories.map((category) => (
-              <div key={category._id}>
-                <button
-                  className="bg-white border border-red-500 text-red-500 py-2 px-4 rounded-lg m-3 hover:bg-red-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                  onClick={() => {
-                    {
-                      setModalVisible(true);
-                      setSelectedCategory(category);
-                      setUpdatingName(category.name);
-                    }
-                  }}
-                >
-                  {category.name}
-                </button>
-              </div>
-            ))
-          ) : (
-            <div className="text-gray-500 text-center w-full">No categories found</div>
-          )}
+        {/* Category Table */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-[#1A1A1A] border border-gray-700">
+            <thead>
+              <tr>
+                <th className="py-2 px-4 border-b border-gray-700">Name</th>
+                <th className="py-2 px-4 border-b border-gray-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCategories?.length > 0 ? (
+                filteredCategories.map((category) => (
+                  <tr key={category._id} className="text-center">
+                    <td className="py-2 px-4 border-b border-gray-700">{category.name}</td>
+                    <td className="py-2 px-4 border-b border-gray-700">
+                      <button
+                        className="bg-blue-500 text-white py-1 px-3 rounded mr-2 hover:bg-blue-600"
+                        onClick={() => openEditModal(category)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600"
+                        onClick={() => openDeleteModal(category)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="2"
+                    className="py-4 px-4 text-gray-400 text-center"
+                  >
+                    No categories found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
 
-        <Modal isOpen={modalVisible} onClose={() => setModalVisible(false)}>
+        {/* Add Category Modal */}
+        <Modal isOpen={modalVisible && modalType === "add"} onClose={() => setModalVisible(false)}>
+          <h2 className="text-xl font-semibold mb-4">Add Category</h2>
+          <CategoryForm
+            value={name}
+            setValue={setName}
+            handleSubmit={handleCreateCategory}
+            inputClass="bg-gray-800 text-white border border-gray-700"
+            buttonClass="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+          />
+        </Modal>
+
+        {/* Edit Modal */}
+        <Modal isOpen={modalVisible && modalType === "edit"} onClose={() => setModalVisible(false)}>
+          <h2 className="text-xl font-semibold mb-4">Edit Category</h2>
           <CategoryForm
             value={updatingName}
-            setValue={(value) => setUpdatingName(value)}
+            setValue={setUpdatingName}
             handleSubmit={handleUpdateCategory}
             buttonText="Update"
-            handleDelete={handleDeleteCategory}
+            inputClass="bg-gray-800 text-white border border-gray-700"
+            buttonClass="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
           />
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal isOpen={modalVisible && modalType === "delete"} onClose={() => setModalVisible(false)}>
+          <h2 className="text-xl font-semibold mb-4">Delete Category</h2>
+          <p className="mb-4">
+            Are you sure you want to delete the category "
+            <strong>{selectedCategory?.name}</strong>"?
+          </p>
+          <div className="flex justify-end">
+            <button
+              className="bg-gray-600 text-gray-200 py-2 px-4 rounded mr-2 hover:bg-gray-700"
+              onClick={() => setModalVisible(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+              onClick={handleDeleteCategory}
+            >
+              Delete
+            </button>
+          </div>
         </Modal>
       </div>
     </div>

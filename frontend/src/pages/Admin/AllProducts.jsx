@@ -238,7 +238,7 @@ const AllProducts = () => {
           )}
         </div>
         <div className="md:w-1/4 p-3 mt-6 md:mt-0">
-          <AdminMenu />
+          {/* <AdminMenu /> */}
         </div>
       </div>
     </div>

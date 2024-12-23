@@ -194,7 +194,7 @@ useEffect(() => {
 
   return (
     <>
-      <AdminMenu />
+      {/* <AdminMenu /> */}
 
       <section className="xl:ml-[4rem] md:ml-[0rem] p-5">
         {/* Các Card Tổng Quan */}
@@ -257,7 +257,7 @@ useEffect(() => {
             ) : registrationsError ? (
               <p className="text-red-500">Error: {registrationsError.message}</p>
             ) : (
-              <div className="bg-gray-800 p-5 rounded-lg shadow-lg">
+              <div className="bg-[#1A1A1A] p-5 rounded-lg shadow-lg">
                 <Chart
                   options={registrationsChart.options}
                   series={registrationsChart.series}
@@ -274,7 +274,7 @@ useEffect(() => {
             {salesLoading ? (
               <Loader />
             ) : (
-              <div className="bg-gray-800 p-5 rounded-lg shadow-lg">
+              <div className="bg-[#1A1A1A] p-5 rounded-lg shadow-lg">
                 <Chart
                   options={salesChart.options}
                   series={salesChart.series}
@@ -296,8 +296,8 @@ useEffect(() => {
           ) : registrationsError ? (
             <p className="text-red-500">Error: {registrationsError.message}</p>
           ) : (
-            <div className="bg-gray-800 p-5 rounded-lg shadow-lg">
-              <table className="min-w-full bg-gray-700 text-white">
+            <div className="bg-[#1A1A1A] p-5 rounded-lg shadow-lg">
+              <table className="min-w-full bg-[#1A1A1A] text-white">
                 <thead>
                   <tr>
                     <th className="py-2">Tháng/Năm</th>

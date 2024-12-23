@@ -151,7 +151,7 @@ const AdminProductUpdate = () => {
     <div className="container mx-auto p-6">
       <div className="flex flex-col md:flex-row gap-6">
         {/* Admin Menu */}
-        <AdminMenu />
+        {/* <AdminMenu /> */}
 
         {/* Update/Delete Form */}
         <div className="flex-1">

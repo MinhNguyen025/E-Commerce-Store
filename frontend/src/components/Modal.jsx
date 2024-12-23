@@ -1,21 +1,23 @@
+// components/Modal.jsx (hoặc nơi bạn định nghĩa Modal)
+import React from "react";
+
 const Modal = ({ isOpen, onClose, children }) => {
+  if (!isOpen) return null;
+
   return (
-    <>
-      {isOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="fixed inset-0 bg-black opacity-50"></div>
-          <div className="absolute top-[40%] right-[50%] bg-white p-4 rounded-lg z-10 text-right">
-            <button
-              className="text-black font-semibold hover:text-gray-700 focus:outline-none mr-2"
-              onClick={onClose}
-            >
-              X
-            </button>
-            {children}
-          </div>
-        </div>
-      )}
-    </>
+    // Lớp overlay (nền đen mờ)
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50"
+      onClick={onClose}
+    >
+      {/* Khối modal chính, bg tối, text trắng, etc. */}
+      <div
+        className="bg-[#1a1a1a] text-white p-6 rounded-lg shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
   );
 };
 

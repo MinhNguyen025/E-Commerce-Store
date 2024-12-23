@@ -69,7 +69,7 @@
     return (
       <div className="container mx-auto p-6 ml-40">
         <div className="flex flex-col md:flex-row gap-6">
-          <AdminMenu />
+          {/* <AdminMenu /> */}
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-6 text-center">Create Product</h1>
 

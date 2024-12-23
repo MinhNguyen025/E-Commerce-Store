@@ -100,7 +100,7 @@ const OrderList = () => {
         </>
       ) : (
         <div className="container mx-auto ml-30 max-w-[80%]">
-          <AdminMenu />
+          {/* <AdminMenu /> */}
 
           {/* Form Tìm Kiếm */}
           <form onSubmit={handleSearch} className="mb-4 flex flex-wrap items-center gap-4">
@@ -139,7 +139,7 @@ const OrderList = () => {
                 className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div className="flex items-end gap-2">
+            {/* <div className="flex items-end gap-2">
               <button
                 type="submit"
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition mt-7"
@@ -153,7 +153,7 @@ const OrderList = () => {
               >
                 Reset
               </button>
-            </div>
+            </div> */}
           </form>
 
           {/* Bảng Danh Sách Đơn Hàng */}

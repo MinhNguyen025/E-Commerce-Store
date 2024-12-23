@@ -1,4 +1,3 @@
-// src/components/UserList.jsx
 import React, { useState, useMemo } from "react";
 import { FaTrash, FaEdit, FaCheck, FaTimes } from "react-icons/fa";
 import Message from "../../components/Message";
@@ -10,6 +9,7 @@ import {
   useUpdateUserMutation,
 } from "../../redux/api/usersApiSlice";
 import { toast } from "react-toastify";
+import Modal from "../../components/Modal";
 
 const UserList = () => {
   const [page, setPage] = useState(1); // Trạng thái trang hiện tại
@@ -22,7 +22,9 @@ const UserList = () => {
   const [deleteUser] = useDeleteUserMutation();
   const [updateUser] = useUpdateUserMutation();
 
-  const [editableUserId, setEditableUserId] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState(""); // "edit" hoặc "delete"
+  const [selectedUser, setSelectedUser] = useState(null);
   const [editableUserName, setEditableUserName] = useState("");
   const [editableUserEmail, setEditableUserEmail] = useState("");
 
@@ -37,35 +39,32 @@ const UserList = () => {
   }, [searchTerm, data]);
 
   // Hàm xử lý xóa người dùng
-  const deleteHandler = async (id) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      try {
-        await deleteUser(id).unwrap();
-        toast.success("User deleted successfully");
-        // Không cần refetch vì dữ liệu đã được cập nhật thông qua RTK Query
-      } catch (err) {
-        toast.error(err?.data?.message || err.error);
-      }
+  const deleteHandler = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await deleteUser(selectedUser._id).unwrap();
+      toast.success("User deleted successfully");
+      setModalVisible(false);
+      setSelectedUser(null);
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
     }
   };
 
-  // Hàm bật chế độ chỉnh sửa
-  const toggleEdit = (id, username, email) => {
-    setEditableUserId(id);
-    setEditableUserName(username);
-    setEditableUserEmail(email);
-  };
-
   // Hàm xử lý cập nhật người dùng
-  const updateHandler = async (id) => {
+  const updateHandler = async () => {
+    if (!selectedUser) return;
+
     try {
       await updateUser({
-        userId: id,
+        userId: selectedUser._id,
         username: editableUserName,
         email: editableUserEmail,
       }).unwrap();
       toast.success("User updated successfully");
-      setEditableUserId(null);
+      setModalVisible(false);
+      setSelectedUser(null);
     } catch (err) {
       toast.error(err?.data?.message || err.error);
     }
@@ -128,37 +127,53 @@ const UserList = () => {
 
   const totalPages = searchTerm ? 1 : data?.pages || 1; // Điều chỉnh tổng số trang khi tìm kiếm
 
+  // Hàm mở modal chỉnh sửa
+  const openEditModal = (user) => {
+    setSelectedUser(user);
+    setEditableUserName(user.username);
+    setEditableUserEmail(user.email);
+    setModalType("edit");
+    setModalVisible(true);
+  };
+
+  // Hàm mở modal xóa
+  const openDeleteModal = (user) => {
+    setSelectedUser(user);
+    setModalType("delete");
+    setModalVisible(true);
+  };
+
   return (
-    <div className="p-4 ml-32">
-      <h1 className="text-2xl font-semibold mb-4">Users</h1>
+    <div className="p-4 ml-48 bg-[#1a1a1a] min-h-screen text-white">
+      <h1 className="text-3xl font-semibold mb-6">Users</h1>
       {/* Thanh Tìm Kiếm */}
-      <form onSubmit={handleSearch} className="mb-4 flex flex-wrap items-center gap-4 ml-20">
+      <form onSubmit={handleSearch} className="mb-6 flex flex-wrap items-center gap-6">
         <div className="flex flex-col">
-          <label htmlFor="searchTerm" className="mb-1">Search</label>
+          <label htmlFor="searchTerm" className="mb-2 text-lg">Search</label>
           <input
             id="searchTerm"
             type="text"
             placeholder="Search by name or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-80 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-80 p-3 border border-gray-600 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
           />
         </div>
-        <div className="flex items-end gap-2 mt-7">
+        {/* <div className="flex items-end gap-3">
           <button
             type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+            className="bg-blue-500 text-white px-5 py-3 rounded-lg hover:bg-blue-600 transition text-lg"
           >
             Search
           </button>
           <button
             type="button"
             onClick={handleReset}
-            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
+            className="bg-gray-600 text-white px-5 py-3 rounded-lg hover:bg-gray-700 transition text-lg"
           >
             Reset
           </button>
-        </div>
+        </div> */}
       </form>
 
       {isLoading ? (
@@ -171,117 +186,59 @@ const UserList = () => {
         <>
           <div className="flex flex-col md:flex-row">
             {/* Bảng Danh Sách Người Dùng */}
-            <table className="w-full md:w-4/5 mx-auto">
+            <table className="w-full md:w-4/5 mx-auto text-lg">
               <thead>
                 <tr>
-                  <th className="px-4 py-2 text-left">ID</th>
-                  <th className="px-4 py-2 text-left">NAME</th>
-                  <th className="px-4 py-2 text-left">EMAIL</th>
-                  <th className="px-4 py-2 text-left">ADMIN</th>
-                  <th className="px-4 py-2"></th>
+                  <th className="px-6 py-3 text-left">ID</th>
+                  <th className="px-6 py-3 text-left">NAME</th>
+                  <th className="px-6 py-3 text-left">EMAIL</th>
+                  <th className="px-6 py-3 text-left">ADMIN</th>
+                  <th className="px-6 py-3 text-center">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="text-center text-red-500 py-4">
+                    <td colSpan="5" className="text-center text-red-500 py-6">
                       No users found matching the search criteria.
                     </td>
                   </tr>
                 ) : (
                   filteredUsers.map((user) => (
-                    <tr key={user._id} className="border-t">
-                      <td className="px-4 py-2">{user._id}</td>
-                      <td className="px-4 py-2">
-                        {editableUserId === user._id ? (
-                          <div className="flex items-center">
-                            <input
-                              type="text"
-                              value={editableUserName}
-                              onChange={(e) => setEditableUserName(e.target.value)}
-                              className="w-full p-2 border rounded-lg"
-                            />
-                            <button
-                              onClick={() => updateHandler(user._id)}
-                              className="ml-2 bg-blue-500 text-white py-2 px-4 rounded-lg"
-                            >
-                              <FaCheck />
-                            </button>
-                            <button
-                              onClick={() => setEditableUserId(null)}
-                              className="ml-2 bg-gray-500 text-white py-2 px-4 rounded-lg"
-                            >
-                              <FaTimes />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center">
-                            {user.username}
-                            <button
-                              onClick={() =>
-                                toggleEdit(user._id, user.username, user.email)
-                              }
-                              className="ml-2 text-blue-500 hover:text-blue-700"
-                            >
-                              <FaEdit />
-                            </button>
-                          </div>
-                        )}
+                    <tr key={user._id} className="border-t border-gray-700">
+                      <td className="px-6 py-4">{user._id}</td>
+                      <td className="px-6 py-4">{user.username}</td>
+                      <td className="px-6 py-4">
+                        <a href={`mailto:${user.email}`} className="text-blue-400 hover:underline">
+                          {user.email}
+                        </a>
                       </td>
-                      <td className="px-4 py-2">
-                        {editableUserId === user._id ? (
-                          <div className="flex items-center">
-                            <input
-                              type="email"
-                              value={editableUserEmail}
-                              onChange={(e) => setEditableUserEmail(e.target.value)}
-                              className="w-full p-2 border rounded-lg"
-                            />
-                            <button
-                              onClick={() => updateHandler(user._id)}
-                              className="ml-2 bg-blue-500 text-white py-2 px-4 rounded-lg"
-                            >
-                              <FaCheck />
-                            </button>
-                            <button
-                              onClick={() => setEditableUserId(null)}
-                              className="ml-2 bg-gray-500 text-white py-2 px-4 rounded-lg"
-                            >
-                              <FaTimes />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center">
-                            <a href={`mailto:${user.email}`} className="text-blue-500 hover:underline">
-                              {user.email}
-                            </a>
-                            <button
-                              onClick={() =>
-                                toggleEdit(user._id, user.username, user.email)
-                              }
-                              className="ml-2 text-blue-500 hover:text-blue-700"
-                            >
-                              <FaEdit />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-2">
+                      <td className="px-6 py-4 text-center">
                         {user.isAdmin ? (
-                          <FaCheck className="text-green-500" />
+                          <FaCheck className="text-green-500 mx-auto text-2xl" />
                         ) : (
-                          <FaTimes className="text-red-500" />
+                          <FaTimes className="text-red-500 mx-auto text-2xl" />
                         )}
                       </td>
-                      <td className="px-4 py-2">
-                        {!user.isAdmin && (
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex justify-center items-center gap-4">
                           <button
-                            onClick={() => deleteHandler(user._id)}
-                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={() => openEditModal(user)}
+                            className="text-blue-400 hover:text-blue-600 p-3 rounded-lg"
+                            title="Edit"
                           >
-                            <FaTrash />
+                            <FaEdit size={20} />
                           </button>
-                        )}
+                          {!user.isAdmin && (
+                            <button
+                              onClick={() => openDeleteModal(user)}
+                              className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg"
+                              title="Delete"
+                            >
+                              <FaTrash size={20} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -289,81 +246,154 @@ const UserList = () => {
               </tbody>
             </table>
           </div>
+        {/* Thanh Phân Trang */}
+        <div className="flex justify-center mt-6 items-center">
+          {/* Nút Trang Đầu */}
+          <button
+            onClick={() => handlePageChange(1)}
+            disabled={page === 1}
+            className={`px-4 py-2 mx-1 border rounded ${
+              page === 1
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
+            }`}
+            title="First Page"
+          >
+            «
+          </button>
 
-          {/* Thanh Phân Trang */}
-          <div className="flex justify-center mt-4 items-center">
-            {/* Nút Trang Đầu */}
+          {/* Nút Trang Trước */}
+          <button
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 1}
+            className={`px-4 py-2 mx-1 border rounded ${
+              page === 1
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
+            }`}
+            title="Previous Page"
+          >
+            ‹
+          </button>
+
+          {/* Các Nút Trang */}
+          {getPageNumbers().map((pageNumber, index) => (
             <button
-              onClick={() => handlePageChange(1)}
-              disabled={page === 1}
+              key={index}
+              onClick={() => typeof pageNumber === "number" && handlePageChange(pageNumber)}
+              disabled={pageNumber === "..."}
               className={`px-4 py-2 mx-1 border rounded ${
-                page === 1
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
+                pageNumber === page
+                  ? "bg-red-600 text-white border-red-600 cursor-default"
+                  : typeof pageNumber === "number"
+                  ? "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
+                  : "bg-transparent text-gray-500 cursor-default"
               }`}
+              title={typeof pageNumber === "number" ? `Go to page ${pageNumber}` : ""}
             >
-              «
+              {pageNumber}
             </button>
+          ))}
 
-            {/* Nút Trang Trước */}
-            <button
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-              className={`px-4 py-2 mx-1 border rounded ${
-                page === 1
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
-              }`}
-            >
-              ‹
-            </button>
+          {/* Nút Trang Tiếp Theo */}
+          <button
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page === totalPages}
+            className={`px-4 py-2 mx-1 border rounded ${
+              page === totalPages
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
+            }`}
+            title="Next Page"
+          >
+            ›
+          </button>
 
-            {/* Các Nút Trang */}
-            {getPageNumbers().map((pageNumber, index) => (
-              <button
-                key={index}
-                onClick={() => typeof pageNumber === 'number' && handlePageChange(pageNumber)}
-                disabled={pageNumber === '...'}
-                className={`px-4 py-2 mx-1 border rounded ${
-                  pageNumber === page
-                    ? "bg-red-600 text-white border-red-600 cursor-default"
-                    : typeof pageNumber === 'number'
-                      ? "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
-                      : "bg-transparent text-gray-500 cursor-default"
-                }`}
-              >
-                {pageNumber}
-              </button>
-            ))}
-
-            {/* Nút Trang Tiếp Theo */}
-            <button
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === totalPages}
-              className={`px-4 py-2 mx-1 border rounded ${
-                page === totalPages
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
-              }`}
-            >
-              ›
-            </button>
-
-            {/* Nút Trang Cuối */}
-            <button
-              onClick={() => handlePageChange(totalPages)}
-              disabled={page === totalPages}
-              className={`px-4 py-2 mx-1 border rounded ${
-                page === totalPages
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
-              }`}
-            >
-              »
-            </button>
-          </div>
+          {/* Nút Trang Cuối */}
+          <button
+            onClick={() => handlePageChange(totalPages)}
+            disabled={page === totalPages}
+            className={`px-4 py-2 mx-1 border rounded ${
+              page === totalPages
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
+            }`}
+            title="Last Page"
+          >
+            »
+          </button>
+        </div>
         </>
       )}
+
+      {/* Modal Edit User */}
+      <Modal isOpen={modalVisible && modalType === "edit"} onClose={() => setModalVisible(false)}>
+        <h2 className="text-2xl font-semibold mb-4">Edit User</h2>
+        {selectedUser && (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <label htmlFor="editUsername" className="mb-2 text-lg">Username</label>
+              <input
+                id="editUsername"
+                type="text"
+                value={editableUserName}
+                onChange={(e) => setEditableUserName(e.target.value)}
+                className="p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="editEmail" className="mb-2 text-lg">Email</label>
+              <input
+                id="editEmail"
+                type="email"
+                value={editableUserEmail}
+                onChange={(e) => setEditableUserEmail(e.target.value)}
+                className="p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+              />
+            </div>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={updateHandler}
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition text-lg flex items-center gap-2"
+              >
+                <FaCheck /> Save
+              </button>
+              <button
+                onClick={() => setModalVisible(false)}
+                className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition text-lg flex items-center gap-2"
+              >
+                <FaTimes /> Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal Delete User */}
+      <Modal isOpen={modalVisible && modalType === "delete"} onClose={() => setModalVisible(false)}>
+        <h2 className="text-2xl font-semibold mb-4">Delete User</h2>
+        {selectedUser && (
+          <div className="flex flex-col gap-4">
+            <p className="text-lg black-text">
+              Are you sure you want to delete the user <strong>{selectedUser.username}</strong>?
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={deleteHandler}
+                className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition text-lg flex items-center gap-2"
+              >
+                <FaTrash /> Delete
+              </button>
+              <button
+                onClick={() => setModalVisible(false)}
+                className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition text-lg flex items-center gap-2"
+              >
+                <FaTimes /> Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
