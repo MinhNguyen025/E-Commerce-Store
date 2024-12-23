@@ -9,9 +9,8 @@ import {
   AiFillCalendar,
 } from "react-icons/ai";
 import { FaChalkboardUser } from "react-icons/fa6";
-import { FaRegHeart } from "react-icons/fa";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { FaRegHeart } from "react-icons/fa"; // <-- Thêm icon Heart ở đây
+import { Link, useNavigate } from "react-router-dom";
 import "./Navigation.css";
 import { useSelector, useDispatch } from "react-redux";
 import { useLogoutMutation } from "../../redux/api/usersApiSlice";
@@ -20,10 +19,10 @@ import FavoritesCount from "../Products/FavoritesCount";
 import { clearFavorites } from "../../redux/features/favorites/favoriteSlice";
 import { clearCartItems } from "../../redux/features/cart/cartSlice";
 
-
 const Navigation = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const { cartItems } = useSelector((state) => state.cart);
+  const { favoriteItems } = useSelector((state) => state.favorites); // <-- Lấy favoriteItems
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -57,10 +56,10 @@ const Navigation = () => {
   const logoutHandler = async () => {
     try {
       await logoutApiCall().unwrap();
-      dispatch(clearCartItems()); 
+      dispatch(clearCartItems());
       dispatch(logout()); // Clear user authentication
       setDropdownOpen(false);
-      navigate("/login"); 
+      navigate("/login");
     } catch (error) {
       console.error(error);
     }
@@ -69,17 +68,18 @@ const Navigation = () => {
   useEffect(() => {
     setDropdownOpen(false);
   }, [userInfo]);
-  
+
   return (
     <div
       style={{ zIndex: 9999 }}
       className={`${
         showSidebar ? "hidden" : "flex"
-      } xl:flex lg:flex md:hidden sm:hidden flex-col justify-between p-4 text-white bg-[#000] w-[4%] hover:w-[15%] h-[100vh] fixed `}
+      } xl:flex lg:flex md:hidden sm:hidden flex-col justify-between p-4 text-white bg-[#000] w-[4%] hover:w-[15%] h-[100vh] fixed`}
       id="navigation-container"
     >
       <div className="flex flex-col justify-center space-y-4">
-      {!userInfo?.isAdmin && (
+        {/* User thường (không phải admin) và đã đăng nhập */}
+        {!userInfo?.isAdmin && userInfo && (
           <>
             {/* HOME */}
             <Link
@@ -104,10 +104,30 @@ const Navigation = () => {
               <AiOutlineShopping className="nav-icon" size={26} />
               <span className="nav-text">Shop</span>
             </Link>
+
+            {/* FAVORITE */}
+            <Link
+              to="/favorite"
+              className={`relative nav-item hover:bg-red-500 ${
+                selectedItem === "FAVORITE" ? "bg-red-500" : ""
+              }`}
+              onClick={() => handleItemClick("FAVORITE")}
+            >
+              <FaRegHeart className="nav-icon" size={26} />
+              <span className="nav-text">Favorites</span>
+              {favoriteItems?.length > 0 && (
+                <span
+                  className="absolute top-1 right-2 text-xs bg-red-500 text-white rounded-full px-1"
+                >
+                  {favoriteItems.length}
+                </span>
+              )}
+            </Link>
           </>
         )}
-         {/* Admin-specific navigation links */}
-         {userInfo?.isAdmin && (
+
+        {/* Admin-specific navigation links */}
+        {userInfo?.isAdmin && (
           <>
             {/* Dashboard */}
             <Link
@@ -182,6 +202,8 @@ const Navigation = () => {
           </>
         )}
       </div>
+
+      {/* Footer của Sidebar (Profile/Logout hoặc Login/Register) */}
       <div className="relative">
         {userInfo ? (
           <>
@@ -204,7 +226,11 @@ const Navigation = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d={dropdownOpen ? "M5 15l7-7 7 7" : "M19 9l-7-7-7 7"}
+                  d={
+                    dropdownOpen
+                      ? "M5 15l7-7 7 7"
+                      : "M19 9l-7-7-7 7"
+                  }
                 />
               </svg>
             </button>
@@ -234,22 +260,22 @@ const Navigation = () => {
           </>
         ) : (
           <>
-            {/*Login và Register*/}
+            {/* Login và Register */}
             <div className="flex flex-col space-y-2">
-            <Link
-              to="/login"
-              className="flex items-center text-white hover:text-red-500 text-sm font-medium"
-            >
-              <FaSignInAlt className="mr-2 " size={26}/>
-              Login
-            </Link>
-            <Link
-              to="/register"
-              className="flex items-center text-white hover:text-red-500 text-sm font-medium"
-            >
-              <FaUserPlus className="mr-2" size={26} /> 
-              Register
-            </Link>
+              <Link
+                to="/login"
+                className="flex items-center text-white hover:text-red-500 text-sm font-medium"
+              >
+                <FaSignInAlt className="mr-2" size={26} />
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="flex items-center text-white hover:text-red-500 text-sm font-medium"
+              >
+                <FaUserPlus className="mr-2" size={26} />
+                Register
+              </Link>
             </div>
           </>
         )}
@@ -259,6 +285,3 @@ const Navigation = () => {
 };
 
 export default Navigation;
-
-
-

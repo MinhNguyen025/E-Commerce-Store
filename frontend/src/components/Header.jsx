@@ -1,12 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaShoppingCart, FaHeart } from "react-icons/fa";
+import { FaShoppingCart } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import logo from "../images/logo.jpg";
 
 const Header = () => {
   const { cartItems } = useSelector((state) => state.cart);
-  const { favoriteItems } = useSelector((state) => state.favorites);
   const { userInfo } = useSelector((state) => state.auth); // Lấy thông tin user từ Redux
 
   return (
@@ -14,23 +13,13 @@ const Header = () => {
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2 ml-20">
-          <img src={logo} alt="Logo" className="h-12 w-12 items-center"/>
-          <span className="text-2xl font-bold ">Innovate your life!</span>
+          <img src={logo} alt="Logo" className="h-12 w-12 items-center" />
+          <span className="text-2xl font-bold">Innovate your life!</span>
         </Link>
 
-        {/* Favorites and Cart */}
-        {!userInfo?.isAdmin && userInfo&&  (
+        {/* Cart (chỉ hiển thị khi user là user thường và đã đăng nhập) */}
+        {!userInfo?.isAdmin && userInfo && (
           <div className="flex items-center space-x-6 mr-60">
-            {/* Favorites */}
-            <Link to="/favorite" className="relative flex items-center">
-              <FaHeart size={24} />
-              {favoriteItems?.length > 0 && (
-                <span className="absolute -top-1 -right-2 text-xs bg-red-500 text-white rounded-full px-1">
-                  {favoriteItems.length}
-                </span>
-              )}
-            </Link>
-
             {/* Cart */}
             <Link to="/cart" className="relative flex items-center">
               <FaShoppingCart size={24} />
