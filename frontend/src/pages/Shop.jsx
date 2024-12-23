@@ -223,7 +223,7 @@ useEffect(() => {
     <>
       <div className="container mx-auto">
         {/* Search Bar */}
-        <div className="flex justify-between items-center mb-6 mr-40">
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold ml-20">Shop</h1>
           <form
             onSubmit={(e) => { e.preventDefault(); }}
