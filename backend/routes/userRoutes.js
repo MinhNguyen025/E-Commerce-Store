@@ -11,10 +11,14 @@ import {
   updateUserById,
   getUserCart,
   updateUserCart,
+  getMonthlyUserRegistrations,
 } from "../controllers/userController.js";
 import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
+
+router.get("/monthly-registrations", authenticate, authorizeAdmin, getMonthlyUserRegistrations);
+
 
 router
   .route("/")
