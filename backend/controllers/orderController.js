@@ -1,6 +1,6 @@
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
-import sendEmail from "../utils/emailService.js"; // Import hàm gửi email
+import sendEmail from "../utils/sendEmail.js"; // Import hàm gửi email
 import User from "../models/userModel.js";
 import mongoose from 'mongoose';
 

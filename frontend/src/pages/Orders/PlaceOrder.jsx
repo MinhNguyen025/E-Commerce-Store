@@ -34,8 +34,11 @@ const PlaceOrder = () => {
       }).unwrap();
 
       dispatch(clearCartItems());
-      toast.success("Order placed successfully! A confirmation email has been sent to your inbox.");
-      window.location.href = `/order/${res._id}`; // Sử dụng backticks
+      toast.success("Order placed successfully!");
+
+      setTimeout(() => {
+        window.location.href = `/order/${res._id}`;
+      }, 2000); 
     } catch (error) {
       console.error("Error placing order:", error);
       toast.error(error?.data?.message || error.message || "Failed to place order."); // Hiển thị thông báo lỗi cụ thể

@@ -14,10 +14,12 @@ const sendEmail = async (options) => {
   // Cấu hình handlebars
   const handlebarOptions = {
     viewEngine: {
-      partialsDir: path.resolve("./backend/views/"), // Thư mục chứa các template phụ
+      // partialsDir: path.resolve("./backend/views/"), // Thư mục chứa các template phụ
+      partialsDir: path.resolve("./views/"), 
       defaultLayout: false,
     },
-    viewPath: path.resolve("./backend/views/"), // Đường dẫn tới thư mục chứa template
+    // viewPath: path.resolve("./backend/views/"), // Đường dẫn tới thư mục chứa template
+    viewPath: path.resolve("./views/"), 
     extName: ".hbs", // Đuôi mở rộng của file template
   };
 

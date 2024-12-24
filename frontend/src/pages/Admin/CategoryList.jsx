@@ -136,7 +136,7 @@ const CategoryList = () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">Manage Categories</h2>
           <button
-            className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+            className="bg-[#DC2626] text-white py-2 px-4 rounded hover:bg-green-600"
             onClick={openAddModal}
           >
             + Add a Category

@@ -1,23 +1,25 @@
-// src/pages/admin/AllProducts.js
+// AllProducts.js
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import { useAllProductsQuery } from "../../redux/api/productApiSlice";
 import AdminMenu from "./AdminMenu";
 import { toast } from "react-toastify";
+import { AiOutlinePlus } from "react-icons/ai"; // Import the Plus Icon
 
+// AllProducts.js
 const AllProducts = () => {
-  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
-  const itemsPerPage = 5; // Số sản phẩm mỗi trang
+  const [currentPage, setCurrentPage] = useState(1); // Current page
+  const itemsPerPage = 5; // Items per page
 
-  const [searchTerm, setSearchTerm] = useState(''); // Từ khóa tìm kiếm
+  const [searchTerm, setSearchTerm] = useState(''); // Search keyword
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
   // Debounce search term
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-      setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
+      setCurrentPage(1); // Reset to first page on search
     }, 500); // 500ms debounce
 
     return () => {
@@ -31,76 +33,77 @@ const AllProducts = () => {
     keyword: debouncedSearchTerm,
   });
 
-  // Xử lý lỗi
+  // Handle errors
   const renderError = () => {
     return <div className="text-red-500">Error: {error?.data?.error || "An unexpected error occurred."}</div>;
   };
 
   const { products, totalPages, totalProducts } = data || {};
 
-  // Hàm xử lý chuyển trang
+  // Handle page change
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
 
-  // Hàm hỗ trợ tạo dãy số trang với dấu "..."
+  // Function to generate page numbers with "..."
   const getPageNumbers = () => {
     const pages = [];
-    const maxPageButtons = 4; // Số nút trang tối đa hiển thị (bao gồm dấu "...")
+    const maxPageButtons = 4; // Maximum number of page buttons (including "...")
     const lastPage = totalPages;
 
     if (lastPage <= maxPageButtons) {
-      // Nếu tổng số trang nhỏ hơn hoặc bằng maxPageButtons, hiển thị tất cả các nút trang
+      // If total pages are less than or equal to maxPageButtons, show all
       for (let i = 1; i <= lastPage; i++) {
         pages.push(i);
       }
     } else {
-      const middleButtons = maxPageButtons - 2; // Các nút trang giữa dấu "..."
+      const middleButtons = maxPageButtons - 2; // Middle page buttons
       let start = Math.max(currentPage - Math.floor(middleButtons / 2), 2);
       let end = start + middleButtons - 1;
 
-      // Điều chỉnh nếu nút trang cuối cùng không đủ
+      // Adjust if end exceeds last page
       if (end >= lastPage) {
         end = lastPage - 1;
         start = end - middleButtons + 1;
       }
 
-      // Thêm nút trang đầu tiên
+      // Add first page
       pages.push(1);
 
-      // Thêm dấu "..." nếu cần
+      // Add "..." if needed
       if (start > 2) {
         pages.push("...");
       }
 
-      // Thêm các nút trang giữa
+      // Add middle pages
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
 
-      // Thêm dấu "..." nếu cần
+      // Add "..." if needed
       if (end < lastPage - 1) {
         pages.push("...");
       }
 
-      // Thêm nút trang cuối cùng
+      // Add last page
       pages.push(lastPage);
     }
 
     return pages;
   };
 
-  // Memo hóa dãy số trang để tối ưu hiệu suất
+  // Memoize page numbers for performance
   const pageNumbers = useMemo(() => getPageNumbers(), [currentPage, totalPages]);
 
   return (
     <div className="container mx-auto px-4 ml-40">
       <div className="flex flex-col md:flex-row">
         <div className="p-3 w-full md:w-3/4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">
+          {/* Header Section with Heading, Search, and Add Button */}
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4 space-y-4 md:space-y-0">
+            <h2 className="text-2xl font-bold text-white">
               All Products ({totalProducts})
             </h2>
             <input
@@ -108,9 +111,18 @@ const AllProducts = () => {
               placeholder="Search by product name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-4 py-2 border rounded w-1/2 md:w-1/3"
+              className="px-4 py-2 border rounded w-full md:w-1/3 bg-[#1A1A1A] text-white"
             />
+            <Link
+              to="/admin/addproduct" // Ensure this route exists
+              className="flex items-center bg-[#DC2626] hover:bg-text-white px-4 py-2 rounded-lg transition duration-300"
+            >
+              <AiOutlinePlus className="mr-2" size={20} />
+              Add a Product
+            </Link>
           </div>
+
+          {/* Products List */}
           <div className="flex flex-col space-y-4">
             {isLoading ? (
               <div>Loading...</div>
@@ -162,10 +174,10 @@ const AllProducts = () => {
             )}
           </div>
 
-          {/* Phân trang */}
+          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-6">
-              {/* Nút Trang Đầu */}
+              {/* First Page Button */}
               <button
                 onClick={() => handlePageChange(1)}
                 disabled={currentPage === 1}
@@ -178,7 +190,7 @@ const AllProducts = () => {
                 «
               </button>
 
-              {/* Nút Trang Trước */}
+              {/* Previous Page Button */}
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -191,7 +203,7 @@ const AllProducts = () => {
                 ‹
               </button>
 
-              {/* Các Nút Trang */}
+              {/* Page Numbers */}
               {pageNumbers.map((pageNumber, index) => (
                 <button
                   key={index}
@@ -209,7 +221,7 @@ const AllProducts = () => {
                 </button>
               ))}
 
-              {/* Nút Trang Tiếp Theo */}
+              {/* Next Page Button */}
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
@@ -222,7 +234,7 @@ const AllProducts = () => {
                 ›
               </button>
 
-              {/* Nút Trang Cuối */}
+              {/* Last Page Button */}
               <button
                 onClick={() => handlePageChange(totalPages)}
                 disabled={currentPage === totalPages}
@@ -246,3 +258,4 @@ const AllProducts = () => {
 };
 
 export default AllProducts;
+

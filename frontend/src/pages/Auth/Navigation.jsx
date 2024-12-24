@@ -149,17 +149,6 @@ const Navigation = () => {
               }`}
               onClick={() => handleItemClick("PRODUCTS")}
             >
-              <AiFillMedicineBox className="nav-icon" size={26} />
-              <span className="nav-text">Products</span>
-            </Link>
-
-            <Link
-              to="/admin/AddProduct"
-              className={`nav-item hover:bg-red-500 ${
-                selectedItem === "PRODUCTS" ? "bg-red-500" : ""
-              }`}
-              onClick={() => handleItemClick("PRODUCTS")}
-            >
               <AiFillFileAdd className="nav-icon" size={26} />
               <span className="nav-text">Products</span>
             </Link>
