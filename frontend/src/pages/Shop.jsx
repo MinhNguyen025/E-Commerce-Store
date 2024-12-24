@@ -23,21 +23,21 @@ const Shop = () => {
   const { categories, products, checked, radio, checkedBrands } = useSelector((state) => state.shop);
   const { userInfo } = useSelector((state) => state.auth);
   const { cartItems } = useSelector((state) => state.cart);
-  const [priceRange, setPriceRange] = useState([0, 5000]); // Giá từ 0 đến 50 triệu
+  const [priceRange, setPriceRange] = useState([0, 5000]); // Giá từ 0 đến 5000$
+  const [showAllBrands, setShowAllBrands] = useState(false); // State cho Show More / Show Less của brands
   const handlePriceRangeChange = (value) => {
     setPriceRange(value);
   };
-  
- 
+
   // Fetch categories
   const categoriesQuery = useFetchCategoriesQuery();
 
   // Fetch brands
   const { data: brandsData, isLoading: brandsLoading, isError: brandsError } = useGetBrandsQuery();
 
-  const [priceFilter, setPriceFilter] = useState(""); 
-  const [searchTerm, setSearchTerm] = useState(""); 
-  const [showAllCategories, setShowAllCategories] = useState(false); 
+  const [priceFilter, setPriceFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,35 +49,34 @@ const Shop = () => {
     }
   }, [categoriesQuery.data, categoriesQuery.isLoading, dispatch]);
 
- // Filtered products query
- const filteredProductsQuery = useGetFilteredProductsQuery({
-  checked,
-  radio,
-  brands: checkedBrands,
-});
+  // Filtered products query
+  const filteredProductsQuery = useGetFilteredProductsQuery({
+    checked,
+    radio,
+    brands: checkedBrands,
+  });
 
-useEffect(() => {
-  if (filteredProductsQuery.data) {
-    let filteredProducts = filteredProductsQuery.data;
+  useEffect(() => {
+    if (filteredProductsQuery.data) {
+      let filteredProducts = filteredProductsQuery.data;
 
-    if (searchTerm) {
-      filteredProducts = filteredProducts.filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      if (searchTerm) {
+        filteredProducts = filteredProducts.filter((product) =>
+          product.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      // Lọc theo khoảng giá
+      filteredProducts = filteredProducts.filter(
+        (product) => product.price >= priceRange[0] && product.price <= priceRange[1]
       );
+
+      dispatch(setProducts(filteredProducts));
     }
-
-    // Lọc theo khoảng giá
-    filteredProducts = filteredProducts.filter(
-      (product) => product.price >= priceRange[0] && product.price <= priceRange[1]
-    );
-
-    dispatch(setProducts(filteredProducts));
-  }
-}, [filteredProductsQuery.data, searchTerm, priceRange, dispatch]);
-
-
+  }, [filteredProductsQuery.data, searchTerm, priceRange, dispatch]);
 
   const displayedCategories = showAllCategories ? categories : categories.slice(0, 9);
+  const displayedBrands = showAllBrands ? brandsData : brandsData?.slice(0, 10); // Hiển thị 10 brands đầu tiên
 
   useEffect(() => {
     if (filteredProductsQuery.data) {
@@ -123,8 +122,10 @@ useEffect(() => {
   const handleReset = () => {
     setSearchTerm("");
     setPriceFilter("");
+    setPriceRange([0, 5000]); // Reset priceRange về giá trị ban đầu
     dispatch(setChecked([]));
     dispatch(setCheckedBrands([]));
+    setShowAllBrands(false); // Reset showAllBrands về false
     setCurrentPage(1);
   };
 
@@ -249,6 +250,7 @@ useEffect(() => {
         <div className="flex md:flex-row ml-12">
           {/* Filters */}
           <div className="bg-[#151515] p-3 mt-2 mb-2">
+            {/* Filter by Categories */}
             <h2 className="h4 text-center py-2 bg-black rounded-full mb-2">
               Filter by Categories
             </h2>
@@ -292,58 +294,69 @@ useEffect(() => {
               ) : brandsError ? (
                 <p className="text-red-500">Error loading brands</p>
               ) : (
-                brandsData.map((brand) => (
-                  <div key={brand} className="mb-2">
-                    <div className="flex items-center mr-4">
-                      <input
-                        type="checkbox"
-                        id={`brand-${brand}`}
-                        onChange={(e) => handleBrandCheck(e.target.checked, brand)}
-                        checked={checkedBrands.includes(brand)}
-                        className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
-                      />
-                      <label
-                        htmlFor={`brand-${brand}`}
-                        className="ml-2 text-sm font-medium text-white"
-                      >
-                        {brand}
-                      </label>
+                <>
+                  {displayedBrands.map((brand) => (
+                    <div key={brand} className="mb-2">
+                      <div className="flex items-center mr-4">
+                        <input
+                          type="checkbox"
+                          id={`brand-${brand}`}
+                          onChange={(e) => handleBrandCheck(e.target.checked, brand)}
+                          checked={checkedBrands.includes(brand)}
+                          className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
+                        />
+                        <label
+                          htmlFor={`brand-${brand}`}
+                          className="ml-2 text-sm font-medium text-white"
+                        >
+                          {brand}
+                        </label>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                  
+                  {/* Nút Show More / Show Less */}
+                  {brandsData.length > 10 && (
+                    <button
+                      onClick={() => setShowAllBrands(!showAllBrands)}
+                      className="text-red-600 hover:underline mt-2"
+                    >
+                      {showAllBrands ? "Show Less" : "Show More"}
+                    </button>
+                  )}
+                </>
               )}
             </div>
 
-{/* Filter by Price Range */}
-<div className="mt-4">
-  <h2 className="h4 text-center py-2 bg-black rounded-full">Filter by Price Range</h2>
-  <div className="p-5">
-    <Slider
-      range
-      min={0}
-      max={5000} // Giới hạn tối đa là 5000$
-      step={10} // Bước nhảy là 10$
-      value={priceRange}
-      onChange={handlePriceRangeChange}
-      trackStyle={[{ backgroundColor: "#FF0000" }]} // Màu vùng đã chọn
-      handleStyle={[
-        { borderColor: "#FF0000" },
-        { borderColor: "#FF0000" },
-      ]} // Màu của hai tay kéo
-    />
-    <div className="flex justify-between text-white mt-2">
-      <span>{priceRange[0].toLocaleString()}</span>
-      <span>{priceRange[1].toLocaleString()}</span>
-    </div>
-    <button
-      onClick={handleReset}
-      className="w-full mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-    >
-      Reset Price
-    </button>
-  </div>
-</div>
-
+            {/* Filter by Price Range */}
+            <div className="mt-4">
+              <h2 className="h4 text-center py-2 bg-black rounded-full">Filter by Price Range</h2>
+              <div className="p-5">
+                <Slider
+                  range
+                  min={0}
+                  max={5000} // Giới hạn tối đa là 5000$
+                  step={10} // Bước nhảy là 10$
+                  value={priceRange}
+                  onChange={handlePriceRangeChange}
+                  trackStyle={[{ backgroundColor: "#FF0000" }]} // Màu vùng đã chọn
+                  handleStyle={[
+                    { borderColor: "#FF0000" },
+                    { borderColor: "#FF0000" },
+                  ]} // Màu của hai tay kéo
+                />
+                <div className="flex justify-between text-white mt-2">
+                  <span>{priceRange[0].toLocaleString()}</span>
+                  <span>{priceRange[1].toLocaleString()}</span>
+                </div>
+                {/* <button
+                  onClick={handleReset}
+                  className="w-full mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                >
+                  Reset Price
+                </button> */}
+              </div>
+            </div>
 
             {/* Reset Filters */}
             <button
@@ -398,21 +411,21 @@ useEffect(() => {
               </button>
 
               {getPageNumbers().map((page, index) => (
-              <button
-                key={index}
-                onClick={() => typeof page === "number" && handlePageChange(page)}
-                disabled={page === "..."}
-                className={`px-4 py-2 mx-1 border rounded ${
-                  page === currentPage
-                    ? "bg-red-600 text-white border-red-600"
-                    : typeof page === "number"
-                    ? "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
-                    : "bg-transparent text-gray-500 cursor-default"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+                <button
+                  key={index}
+                  onClick={() => typeof page === "number" && handlePageChange(page)}
+                  disabled={page === "..."}
+                  className={`px-4 py-2 mx-1 border rounded ${
+                    page === currentPage
+                      ? "bg-red-600 text-white border-red-600"
+                      : typeof page === "number"
+                      ? "bg-gray-200 text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-400"
+                      : "bg-transparent text-gray-500 cursor-default"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
 
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
